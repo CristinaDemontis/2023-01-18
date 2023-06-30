@@ -5,8 +5,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+
+import com.javadocmd.simplelatlng.LatLng;
+
 import it.polito.tdp.nyc.model.Hotspot;
+import it.polito.tdp.nyc.model.LocationPrimario;
 
 public class NYCDao {
 	
@@ -35,6 +40,60 @@ public class NYCDao {
 
 		return result;
 	}
+	
+	
+	public List<String> getAllProvider(){
+		String sql = "SELECT DISTINCT n.Provider "
+				+ "FROM nyc_wifi_hotspot_locations n "; 
+		List<String> result = new LinkedList<>(); 
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				result.add(res.getString("Provider"));
+			}
+			
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+		
+		return result; 
+	}
+	
+	public List<LocationPrimario> getLocationByProvider(String provider){
+		String sql = "SELECT DISTINCT n.Location, n.Latitude, n.Longitude "
+				+ "FROM nyc_wifi_hotspot_locations n "
+				+ "WHERE n.Provider = ? "; 
+		List<LocationPrimario> result = new LinkedList<>(); 
+		
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setString(1, provider);
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				
+				String loc = "SELECT DISTINCT n.Location, n.Latitude, n.Longitude "
+						+ "FROM nyc_wifi_hotspot_locations n "
+						+ "WHERE n.Provider = ? "; 
+				LatLng coord = new LatLng(res.getDouble("Latitude"), res.getDouble("Longitude")); 			
+				result.add(new LocationPrimario(res.getString("Location"),coord));
+			}
+			
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+		
+		return result; 
+	}
+	
 	
 
 }
